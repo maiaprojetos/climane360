@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="Painel meteorológico municipal V3-P do Ceará, Rio Grande do Norte, Paraíba e Pernambuco.">
+<title>Painel Meteorológico NE — V10 • CE • RN • PB • PE • PI • AL • SE</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+:root{--bg:#06111d;--panel:#0b1a2a;--panel2:#10263b;--line:#203b55;--text:#edf6ff;--muted:#91a8bd;--accent:#38bdf8}
+*{box-sizing:border-box}html,body{height:100%;margin:0}body{font:14px system-ui,-apple-system,Segoe UI,sans-serif;background:var(--bg);color:var(--text)}
+header{padding:15px 18px;border-bottom:1px solid var(--line);background:#071522}.brand{font-weight:800;font-size:20px}.muted{color:var(--muted)}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;padding:10px;background:var(--panel);border-bottom:1px solid var(--line)}
+input,select,button{border:1px solid #2a4863;background:#081727;color:var(--text);border-radius:9px;padding:9px 10px}input{min-width:260px;flex:1}button{cursor:pointer}button.active{border-color:var(--accent);background:#10344b}
+main{height:calc(100% - 129px);display:grid;grid-template-columns:1fr 360px}#map{min-height:500px}.side{overflow:auto;padding:13px;background:var(--panel);border-left:1px solid var(--line)}
+.card{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:13px;margin-bottom:10px}.title{font-size:19px;font-weight:800}.small{font-size:12px;color:var(--muted)}
+.metrics{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}.metric{padding:10px;border-radius:9px;border:1px solid var(--line);background:#0a1b2d}.metric span{display:block;font-size:11px;color:var(--muted)}.metric b{display:block;font-size:17px;margin-top:3px}
+.notice{border-left:3px solid #f59e0b;padding-left:10px}.loading{opacity:.7}.legend{background:rgba(6,17,29,.92);padding:9px;border-radius:8px;line-height:21px}.flightbox{margin-top:7px;padding:7px;border:1px solid var(--line);border-radius:8px;background:#081727}.flight{padding:3px 0;border-bottom:1px solid #183149}.flight:last-child{border-bottom:0}.aviation hr{border:0;border-top:1px solid var(--line);margin:8px 0}
+#searchResults{position:absolute;z-index:1000;top:59px;left:10px;right:10px;max-width:520px;background:var(--panel);border:1px solid var(--line);border-radius:10px;display:none;overflow:hidden}.result{padding:9px;border-bottom:1px solid var(--line);cursor:pointer}.result:hover{background:var(--panel2)}
+footer{padding:7px 12px;font-size:11px;color:var(--muted);border-top:1px solid var(--line)}
+@media(max-width:850px){main{height:auto;display:flex;flex-direction:column}.side{border-left:0;border-top:1px solid var(--line)}#map{height:58vh}.toolbar{position:relative}}
+</style>
+</head>
+<body>
+<header><div class="brand">🌎 Painel Meteorológico Municipal — CE • RN • PB • PE • PI • AL • SE</div>
+<div class="muted">Temperatura, umidade, pressão, vento em km/h e direção, UV, chuva acumulada em 2026, Ng e nuvens.</div></header>
+<div class="toolbar">
+<input id="search" autocomplete="off" placeholder="🔎 Pesquisar município…">
+<select id="metric">
+<option value="temp">🌡 Temperatura agora</option><option value="humidity">💧 Umidade agora</option>
+<option value="pressureLocal">🧭 Pressão local agora</option><option value="pressure">🌊 Pressão ao nível do mar</option><option value="rain">🌧 Chuva acumulada 2026</option>
+<option value="uv">☀️ UV máximo do dia</option><option value="ng">⚡ Ng — densidade de raios</option><option value="clouds">☁️ Nuvens agora</option><option value="wind">🌬 Vento agora</option>
+</select>
+<button data-uf="CE" class="active">CE</button><button data-uf="RN">RN</button><button data-uf="PB">PB</button><button data-uf="PE">PE</button><button data-uf="PI">PI</button><button data-uf="AL">AL</button><button data-uf="SE">SE</button>
+</div>
+<main>
+<section style="position:relative"><div id="map"></div><div id="searchResults"></div></section>
+<aside class="side">
+<div class="card">
+<div id="place" class="title">Selecione um município</div><div id="meta" class="small">Clique no mapa ou pesquise acima.</div>
+<div class="metrics">
+<div class="metric"><span>🌡 Temperatura</span><b id="temp">—</b></div>
+<div class="metric"><span>💧 Umidade</span><b id="humidity">—</b></div>
+<div class="metric"><span>🧭 Pressão local</span><b id="pressureLocal">—</b></div>
+<div class="metric"><span>🌊 Pressão ao nível do mar</span><b id="pressure">—</b></div>
+<div class="metric"><span>🌧 Chuva 2026</span><b id="rain">—</b></div>
+<div class="metric"><span>☀️ UV máximo</span><b id="uv">—</b></div>
+<div class="metric"><span>⚡ Ng municipal</span><b id="ng">—</b></div><div class="metric"><span>☁️ Nuvens</span><b id="clouds">—</b></div><div class="metric"><span>🌬 Vento</span><b id="wind">—</b></div><div class="metric"><span>🧭 Direção do vento</span><b id="windDir">—</b></div>
+</div></div>
+<div class="card"><b>✈️ Aeroportos e 🛳️ portos</b><div id="transport" class="small">Carregando infraestrutura…</div></div><div class="card"><b>Status dos dados</b><p id="status" class="small">Carregando municípios…</p></div>
+<div class="card"><b>Fontes e metodologia</b>
+<p class="small">Limites municipais: malha municipal distribuída para o navegador. Meteorologia: Open-Meteo. Pressão local: pressão atmosférica na superfície do município. Pressão ao nível do mar: pressão atmosférica reduzida ao nível médio do mar. Chuva 2026: soma diária desde 01/01/2026. Ng: dados municipais publicados em <b>ng-brasil-mapas</b>, conforme NBR 5419-2:2026 (Anexo F).</p></div>
+<div class="card notice"><b>🧭 Pressões atmosféricas</b><p class="small">A pressão local representa a pressão atmosférica na superfície/elevação do município. A pressão ao nível do mar é a pressão reduzida ao nível médio do mar. Ambas são apresentadas em hPa.</p></div>
+<div class="card notice"><b>⚡ Ng municipal — fonte indicada</b><p class="small">O valor de Ng é obtido diretamente do arquivo <b>ng_dados.json</b> publicado pelo projeto <b>Ng por Município</b>, usando o código IBGE do município. O campo principal utilizado é <b>ng_nbr5419_2026</b>.</p></div>
+<div class="card"><b>Publicação</b><p class="small">Este projeto é estático e pode ser publicado no GitHub Pages, Netlify ou Vercel. As consultas meteorológicas são feitas diretamente à API do Open-Meteo no navegador.</p></div>
+</aside>
+</main>
+<footer>Mapa © OpenStreetMap contributors • Limites municipais • Meteorologia: Open-Meteo • Ng municipal: rafaelf09/ng-brasil-mapas — NBR 5419-2:2026</footer>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+const VERSION='V10';
+const map=L.map('map',{preferCanvas:true}).setView([-6.2,-37.2],7);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18,attribution:'© OpenStreetMap contributors'}).addTo(map);
+
+const UFS=['CE','RN','PB','PE','PI','AL','SE'];
+const GEO='https://cdn.jsdelivr.net/gh/henriquemalvar/br-geojson@main/dist/municipios/';
+const NG_SOURCE='https://rafaelf09.github.io/ng-brasil-mapas/ng_dados.json';
+let all=[], layer, selected=null, metric='temp', cache={}, ngData=null, airports=[], ports=[], airportLayer, portLayer;
+const $=id=>document.getElementById(id);
+
+function name(p){return p.nome||p.NM_MUN||p.name||'Município'}
+function uf(p){return p.uf||p.SIGLA_UF||''}
+function code(p){return p.cd_geocmu||p.CD_MUN||p.code||''}
+function bboxCenter(g){
+ let xs=[],ys=[];
+ const walk=a=>Array.isArray(a[0])?a.forEach(walk):(xs.push(a[0]),ys.push(a[1]));
+ walk(g.coordinates); return [ys.reduce((a,b)=>a+b,0)/ys.length,xs.reduce((a,b)=>a+b,0)/xs.length];
+}
+function centerOf(f){
+ try{
+  const g=f.geometry;
+  if(g.type==='Point')return [g.coordinates[1],g.coordinates[0]];
+  return bboxCenter(g);
+ }catch{return [0,0]}
+}
+function tempColor(v){
+ if(v==null)return '#475569';
+ return v>=38?'#7f1d1d':v>=36?'#991b1b':v>=33?'#ea580c':v>=30?'#eab308':v>=27?'#22c55e':'#2563eb';
+}
+function color(v){ if(metric==='clouds'){if(v==null)return '#475569'; return v>=90?'#334155':v>=75?'#64748b':v>=50?'#94a3b8':v>=25?'#cbd5e1':'#f8fafc'} if(metric==='wind'){if(v==null)return '#475569'; return v>=40?'#7f1d1d':v>=30?'#dc2626':v>=20?'#f59e0b':v>=10?'#22c55e':'#2563eb'} return tempColor(v); }
+function metricValue(d){ if(metric==='clouds') return d?.clouds??null; if(metric==='wind') return d?.wind??null; return d?.temp??null }
+function windDirText(deg){ if(deg==null || !Number.isFinite(Number(deg)))return '—'; const d=((Number(deg)%360)+360)%360; const dirs=['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW']; return `${Math.round(d)}° ${dirs[Math.round(d/22.5)%16]}` }
+function windFmt(v){ return v==null?'—':`${Number(v).toFixed(1)} km/h` }
+function fmt(k,v){
+ if(v==null)return '—';
+ if(k==='temp')return v.toFixed(1)+' °C';
+ if(k==='humidity')return Math.round(v)+' %';
+ if(k==='pressure' || k==='pressureLocal')return Math.round(v)+' hPa';
+ if(k==='rain')return v.toFixed(1)+' mm';
+ if(k==='uv')return v.toFixed(1);
+ if(k==='ng')return v.toFixed(1)+' raios/km²/ano';
+ if(k==='clouds')return Math.round(v)+' %';
+ if(k==='wind')return windFmt(v);
+}
+function style(f){return {weight:.55,color:'#18354d',fillColor:color(metricValue(cache[code(f.properties)])),fillOpacity:.72}}
+function render(){if(layer)layer.setStyle(style); $('status').textContent=`${all.length} municípios carregados • Indicador exibido: ${$('metric').selectedOptions[0].text}`}
+
+async function loadMaps(){
+ try{
+  const parts=await Promise.all(UFS.map(u=>fetch(GEO+u+'.geojson').then(r=>r.json())));
+  all=parts.flatMap(x=>x.features||[]);
+  layer=L.geoJSON({type:'FeatureCollection',features:all},{
+   style,onEachFeature:(f,l)=>l.on({
+    click:()=>select(f,l),
+    mouseover:e=>e.target.setStyle({weight:1.5,color:'#fff'}),
+    mouseout:e=>{if(!selected||selected!==f)e.target.setStyle(style(f))}
+   })
+  }).addTo(map);
+  map.fitBounds(layer.getBounds(),{padding:[8,8]});
+  $('status').textContent=`${all.length} municípios carregados. Clique em um para consultar os dados.`;
+ }catch(e){$('status').textContent='Erro ao carregar a malha municipal. Verifique a conexão.'}
+}
+
+async function loadNgData(){
+ try{
+  const r=await fetch(NG_SOURCE,{cache:'no-store'});
+  if(!r.ok)throw Error('ng');
+  ngData=await r.json();
+  $('status').textContent='Base Ng municipal carregada da fonte indicada.';
+ }catch(e){
+  ngData=null;
+  $('status').textContent='Meteorologia disponível; a base Ng municipal não pôde ser carregada.';
+ }
+}
+function ngForMunicipio(c){
+ if(!ngData||!c)return null;
+ const x=ngData[String(c)];
+ if(!x)return null;
+ const v=Number(x.ng_nbr5419_2026);
+ return Number.isFinite(v)?v:null;
+}
+
+async function weather(lat,lon){
+ const tz='America/Sao_Paulo';
+ const fc=`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,pressure_msl,surface_pressure,cloud_cover,wind_speed_10m,wind_direction_10m&daily=uv_index_max&timezone=${encodeURIComponent(tz)}&forecast_days=1`;
+ const r=await fetch(fc); if(!r.ok)throw Error('forecast');
+ const j=await r.json();
+ const uv=j.daily?.uv_index_max?.[0]??null;
+ return {temp:j.current?.temperature_2m,humidity:j.current?.relative_humidity_2m,pressure:j.current?.pressure_msl,pressureLocal:j.current?.surface_pressure,uv,clouds:j.current?.cloud_cover,wind:j.current?.wind_speed_10m,windDir:j.current?.wind_direction_10m};
+}
+async function rain2026(lat,lon){
+ const start='2026-01-01';
+ const end=new Date(Date.now()-86400000).toISOString().slice(0,10);
+ const url=`https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lon}&start_date=${start}&end_date=${end}&daily=precipitation_sum&timezone=America%2FSao_Paulo`;
+ const r=await fetch(url); if(!r.ok)throw Error('archive');
+ const j=await r.json();
+ return (j.daily?.precipitation_sum||[]).reduce((s,x)=>s+(Number(x)||0),0);
+}
+async function getData(f){
+ const c=code(f.properties), old=cache[c];
+ if(old && old.ts>Date.now()-20*60*1000)return old;
+ const [lat,lon]=centerOf(f);
+ $('status').textContent='Consultando meteorologia…';
+ const [w,rain]=await Promise.all([
+  weather(lat,lon), rain2026(lat,lon).catch(()=>null)
+ ]);
+ const d={...w,rain,ng:ngForMunicipio(c),
+   ngSource:'rafaelf09/ng-brasil-mapas',ngVersion:'NBR 5419-2:2026',
+   ts:Date.now(),lat,lon};
+ cache[c]=d;
+ localStorage.setItem('meteo-cache-'+c,JSON.stringify(d));
+ return d;
+}
+async function select(f,l){
+ selected=f; if(layer)layer.eachLayer(x=>x.setStyle(style(x.feature))); l.setStyle({weight:2,color:'#fff'});
+ const p=f.properties,c=code(p),[lat,lon]=centerOf(f);
+ $('place').textContent=`${name(p)} — ${uf(p)}`;
+ $('meta').textContent=`Código IBGE: ${c||'—'} • centro aproximado: ${lat.toFixed(4)}, ${lon.toFixed(4)}`;
+ ['temp','humidity','pressureLocal','pressure','rain','uv','ng','clouds','wind','windDir'].forEach(k=>$(k).textContent='…');
+ map.fitBounds(l.getBounds(),{maxZoom:10});
+ try{
+  let d=JSON.parse(localStorage.getItem('meteo-cache-'+c)||'null');
+  if(!d || d.ts<Date.now()-20*60*1000)d=await getData(f); else cache[c]=d;
+  ['temp','humidity','pressureLocal','pressure','rain','uv','ng','clouds'].forEach(k=>$(k).textContent=fmt(k,d[k]));
+  $('wind').textContent=windFmt(d.wind); $('windDir').textContent=windDirText(d.windDir);
+  $('status').textContent=`Atualizado às ${new Date(d.ts).toLocaleTimeString('pt-BR')}. Ng: ${d.ng!=null?'fonte municipal rafaelf09/ng-brasil-mapas.':'indisponível.'}`;
+  const selectedLabel=$('metric').selectedOptions[0]?.textContent||'Indicador selecionado';
+  const selectedValue=metric==='wind'?`${windFmt(d.wind)} • ${windDirText(d.windDir)}`:fmt(metric,d[metric]);
+  const popup=`<div style="min-width:230px"><b>📍 ${esc(name(p))} — ${esc(uf(p))}</b><hr style="border:0;border-top:1px solid #aaa"><b>${esc(selectedLabel)}</b><br><span style="font-size:18px">${esc(selectedValue)}</span><br><br><b>🌡 ${fmt('temp',d.temp)} · 💧 ${fmt('humidity',d.humidity)}</b><br>🌬 ${windFmt(d.wind)} · ${windDirText(d.windDir)}<br>🧭 ${fmt('pressureLocal',d.pressureLocal)} · 🌊 ${fmt('pressure',d.pressure)}<br>☁️ ${fmt('clouds',d.clouds)} · 🌧 ${fmt('rain',d.rain)}<br>☀️ UV ${fmt('uv',d.uv)} · ⚡ Ng ${fmt('ng',d.ng)}<br><span style="font-size:11px;color:#667">Atualizado ${new Date(d.ts).toLocaleTimeString('pt-BR')}</span></div>`;
+  l.bindPopup(popup,{maxWidth:320}).openPopup();
+ }catch(e){$('status').textContent='Não foi possível consultar a meteorologia agora.';l.bindPopup(`<b>📍 ${esc(name(p))} — ${esc(uf(p))}</b><br>Dados meteorológicos indisponíveis no momento.`).openPopup()}
+}
+const AIRPORTS=[
+ {name:'Aeroporto Internacional de Fortaleza — Pinto Martins',city:'Fortaleza',uf:'CE',iata:'FOR',icao:'SBFZ',lat:-3.7758,lon:-38.5322},
+ {name:'Aeroporto de Jericoacoara',city:'Cruz/Jijoca de Jericoacoara',uf:'CE',iata:'JJD',icao:'SBJE',lat:-2.9067,lon:-40.3581},
+ {name:'Aeroporto de Juazeiro do Norte — Orlando Bezerra de Menezes',city:'Juazeiro do Norte',uf:'CE',iata:'JDO',icao:'SBJU',lat:-7.21896,lon:-39.2701},
+ {name:'Aeroporto de Mossoró — Dix-Sept Rosado',city:'Mossoró',uf:'RN',iata:'MVF',icao:'SBMS',lat:-5.2019,lon:-37.3643},
+ {name:'Aeroporto Internacional de Natal — Governador Aluízio Alves',city:'São Gonçalo do Amarante',uf:'RN',iata:'NAT',icao:'SBSG',lat:-5.7681,lon:-35.3761},
+ {name:'Aeroporto Internacional Presidente Castro Pinto',city:'João Pessoa/Bayeux',uf:'PB',iata:'JPA',icao:'SBJP',lat:-7.1458,lon:-34.9486},
+ {name:'Aeroporto Presidente João Suassuna',city:'Campina Grande',uf:'PB',iata:'CPV',icao:'SBKG',lat:-7.2697,lon:-35.8964},
+ {name:'Aeroporto Internacional do Recife — Guararapes',city:'Recife',uf:'PE',iata:'REC',icao:'SBRF',lat:-8.1265,lon:-34.9236},
+ {name:'Aeroporto Internacional de Petrolina — Senador Nilo Coelho',city:'Petrolina',uf:'PE',iata:'PNZ',icao:'SBPL',lat:-9.3624,lon:-40.5691},
+ {name:'Aeroporto Internacional de Teresina — Senador Petrônio Portella',city:'Teresina',uf:'PI',iata:'THE',icao:'SBTE',lat:-5.0599,lon:-42.8235},
+ {name:'Aeroporto Internacional de Parnaíba — Prefeito Dr. João Silva Filho',city:'Parnaíba',uf:'PI',iata:'PHB',icao:'SBPB',lat:-2.8937,lon:-41.7319},
+ {name:'Aeroporto Internacional Zumbi dos Palmares',city:'Maceió',uf:'AL',iata:'MCZ',icao:'SBMO',lat:-9.5108,lon:-35.7917},
+ {name:'Aeroporto Internacional de Aracaju — Santa Maria',city:'Aracaju',uf:'SE',iata:'AJU',icao:'SBAR',lat:-10.9840,lon:-37.0703},
+];
+function esc(x){return String(x??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+function flightLine(f,kind){const t=f.time?new Date(f.time):null;const hh=t&&!isNaN(t)?t.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit',hour12:false}):'—';const status=f.actual?'realizado':'previsto';const route=kind==='arrival'?f.origin:f.destination;return `<div class="flight"><b>${esc(f.airline||'—')}</b> ${esc(f.flight||'—')} · <b>${hh}</b> <span class="small">${esc(route||'—')} · ${status}</span></div>`}
+function flightSection(title,list,kind){return `<div class="flightbox"><b>${title}</b>${(list||[]).length?list.slice(0,20).map(f=>flightLine(f,kind)).join(''):'<span class="small">Nenhum voo encontrado.</span>'}</div>`}
+async function loadTransport(){
+ airports=AIRPORTS; ports=[
+ {name:'Porto do Pecém',uf:'CE',lat:-3.5315,lon:-38.7980},
+ {name:'Porto de Mucuripe',uf:'CE',lat:-3.7167,lon:-38.4767},
+ {name:'Porto de Natal',uf:'RN',lat:-5.7764,lon:-35.2030},
+ {name:'Porto de Areia Branca',uf:'RN',lat:-4.9568,lon:-37.1360},
+ {name:'Porto de Cabedelo',uf:'PB',lat:-6.9667,lon:-34.8389},
+ {name:'Porto de Suape',uf:'PE',lat:-8.3906,lon:-34.9601},
+ {name:'Porto do Recife',uf:'PE',lat:-8.0578,lon:-34.8711},
+ {name:'Porto de Maceió',uf:'AL',lat:-9.6840,lon:-35.7250},
+ {name:'Terminal Marítimo Inácio Barbosa',uf:'SE',lat:-10.9100,lon:-36.9650},
+ {name:'Porto de Luís Correia',uf:'PI',lat:-2.8833,lon:-41.6667}
+ ];
+ airportLayer=L.layerGroup().addTo(map); portLayer=L.layerGroup().addTo(map);
+ airports.forEach(a=>{const m=L.marker([a.lat,a.lon],{title:a.name}).bindPopup(`<b>✈️ ${a.name}</b><br>${a.city} — ${a.iata}/${a.icao}<br><span id="ap-${a.icao}">Consultando voos, METAR e TAF…</span>`);m.on('click',()=>loadAirport(a,m));m.addTo(airportLayer)});
+ ports.forEach(x=>L.marker([x.lat,x.lon],{title:x.name}).bindPopup(`<b>🛳️ ${x.name}</b><br>${x.uf}`).addTo(portLayer));
+ $('transport').innerHTML=`${airports.length} aeroportos e ${ports.length} portos/terminais representados. Clique em um aeroporto para consultar <b>METAR e TAF</b> e os voos programados nas <b>10 horas anteriores + 10 horas seguintes</b>.`;
+}
+async function loadAirport(a,m){
+ try{
+  const r=await fetch(`/api/airport?icao=${encodeURIComponent(a.icao)}&lat=${a.lat}&lon=${a.lon}`); const j=await r.json();
+  const ceiling=j.ceilingFt!=null?`${Math.round(j.ceilingFt)} ft`:'sem teto BKN/OVC/VV informado';
+  const obs=j.metar?.obsTime?new Date(j.metar.obsTime).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}):'—';
+  const taf=j.taf?.rawTAF||'TAF indisponível';
+  const aw=j.metar?.wind; const awind=aw?.speedKt!=null?`${(Number(aw.speedKt)*1.852).toFixed(1)} km/h`:''; const adir=aw?.directionDeg!=null?`${Math.round(Number(aw.directionDeg))}°`:'';
+  const el=document.getElementById(`ap-${a.icao}`);
+  if(el)el.innerHTML=`<div class="aviation"><b>☁️ Teto:</b> ${ceiling}<br><b>METAR:</b> ${obs} · ${esc(j.metar?.rawOb||'indisponível')}<br><b>🌬 Vento METAR:</b> ${awind||'—'} ${adir}<br><b>TAF:</b> ${esc(taf)}<hr>${flightSection('🛬 Últimas 10 h — chegadas',j.arrivalsPast,'arrival')}${flightSection('🛫 Últimas 10 h — partidas',j.departuresPast,'departure')}${flightSection('🛬 Próximas 10 h — chegadas',j.arrivalsNext,'arrival')}${flightSection('🛫 Próximas 10 h — partidas',j.departuresNext,'departure')}</div>`;
+  m.openPopup();
+ }catch(e){const el=document.getElementById(`ap-${a.icao}`);if(el)el.textContent='Não foi possível consultar voos/METAR/TAF agora.'}
+}
+function filterUF(v){
+ if(!layer)return;
+ layer.eachLayer(l=>{const ok=uf(l.feature.properties)===v;l.setStyle({...style(l.feature),fillOpacity:ok?.72:.04,opacity:ok?1:.18})});
+}
+$('metric').onchange=e=>{metric=e.target.value;render()};
+document.querySelectorAll('[data-uf]').forEach(b=>b.onclick=()=>{document.querySelectorAll('[data-uf]').forEach(x=>x.classList.remove('active'));b.classList.add('active');filterUF(b.dataset.uf)});
+function activateUF(v){const b=document.querySelector(`[data-uf="${v}"]`);if(b){document.querySelectorAll('[data-uf]').forEach(x=>x.classList.remove('active'));b.classList.add('active');filterUF(v)}}
+
+let timer;
+$('search').oninput=e=>{
+ clearTimeout(timer);const q=e.target.value.trim().toLowerCase(),box=$('searchResults');
+ if(q.length<2){box.style.display='none';return}
+ timer=setTimeout(()=>{
+  const hits=all.filter(f=>(name(f.properties)+' '+uf(f.properties)).toLowerCase().includes(q)).slice(0,10);
+  box.innerHTML=hits.map((f,i)=>{const d=cache[code(f.properties)]; return `<div class="result" data-i="${i}"><b>${name(f.properties)}</b> — ${uf(f.properties)}<br><span class="small">IBGE ${code(f.properties)}${d?` · 🌬 ${windFmt(d.wind)} ${windDirText(d.windDir)}`:' · clique para consultar vento'}</span></div>`}).join('');
+  box.style.display=hits.length?'block':'none';
+  box.querySelectorAll('.result').forEach(el=>el.onclick=()=>{const f=hits[+el.dataset.i]; select(f,layer.getLayers().find(x=>x.feature===f)); activateUF(uf(f.properties)); box.style.display='none'; $('search').value=name(f.properties)});
+ },150);
+};
+document.addEventListener('click',e=>{if(!e.target.closest('#search')&&!e.target.closest('#searchResults'))$('searchResults').style.display='none'});
+Promise.all([loadNgData(),loadMaps(),loadTransport()]);
+</script>
+</body></html>
