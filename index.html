@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="description" content="Painel meteorológico municipal V3-P do Ceará, Rio Grande do Norte, Paraíba e Pernambuco.">
-<title>Painel Meteorológico NE — V10 • CE • RN • PB • PE • PI • AL • SE</title>
+<title>Painel Meteorológico NE — V40 • CE • RN • PB • PE • PI • AL • SE</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
 :root{--bg:#06111d;--panel:#0b1a2a;--panel2:#10263b;--line:#203b55;--text:#edf6ff;--muted:#91a8bd;--accent:#38bdf8}
@@ -17,12 +17,25 @@ main{height:calc(100% - 129px);display:grid;grid-template-columns:1fr 360px}#map
 .metrics{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}.metric{padding:10px;border-radius:9px;border:1px solid var(--line);background:#0a1b2d}.metric span{display:block;font-size:11px;color:var(--muted)}.metric b{display:block;font-size:17px;margin-top:3px}
 .notice{border-left:3px solid #f59e0b;padding-left:10px}.loading{opacity:.7}.legend{background:rgba(6,17,29,.92);padding:9px;border-radius:8px;line-height:21px}.flightbox{margin-top:7px;padding:7px;border:1px solid var(--line);border-radius:8px;background:#081727}.flight{padding:3px 0;border-bottom:1px solid #183149}.flight:last-child{border-bottom:0}.aviation hr{border:0;border-top:1px solid var(--line);margin:8px 0}
 #searchResults{position:absolute;z-index:1000;top:59px;left:10px;right:10px;max-width:520px;background:var(--panel);border:1px solid var(--line);border-radius:10px;display:none;overflow:hidden}.result{padding:9px;border-bottom:1px solid var(--line);cursor:pointer}.result:hover{background:var(--panel2)}
+.airport-icon{background:transparent!important;border:0!important}
+.metar-green{background:#063b24;color:#d9ffe9;border:2px solid #22c55e;border-radius:12px;padding:12px;box-shadow:0 4px 18px #0008;font-family:system-ui,-apple-system,Segoe UI,sans-serif}
+.metar-head{font-size:18px;font-weight:900;color:#86efac;margin-bottom:7px}
+.metar-airport{line-height:1.35;margin-bottom:9px}.metar-airport span{font-size:12px;color:#b9e9ca}
+.metar-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:8px 0}
+.metar-grid>div{background:#07552f;border:1px solid #16824c;border-radius:7px;padding:7px}
+.metar-grid span{display:block;font-size:10px;color:#9de8b6}.metar-grid b{font-size:12px}
+.metar-raw{background:#021f13;border:1px solid #17633e;border-radius:7px;padding:8px;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:12px;line-height:1.35;word-break:break-word;margin:8px 0}
+.metar-link{display:block;text-align:center;background:#22c55e;color:#032414!important;text-decoration:none;font-weight:900;border-radius:8px;padding:9px;margin-top:8px}
+.metar-note{font-size:10px;color:#9de8b6;margin-top:7px;line-height:1.3}
+.leaflet-popup-content-wrapper,.leaflet-popup-tip{background:#063b24}
+.leaflet-popup-content{margin:8px}
+
 footer{padding:7px 12px;font-size:11px;color:var(--muted);border-top:1px solid var(--line)}
 @media(max-width:850px){main{height:auto;display:flex;flex-direction:column}.side{border-left:0;border-top:1px solid var(--line)}#map{height:58vh}.toolbar{position:relative}}
 </style>
 </head>
 <body>
-<header><div class="brand">🌎 Painel Meteorológico Municipal — CE • RN • PB • PE • PI • AL • SE</div>
+<header><div class="brand">🌎 Painel Meteorológico Municipal V40 — CE • RN • PB • PE • PI • AL • SE</div>
 <div class="muted">Temperatura, umidade, pressão, vento em km/h e direção, UV, chuva acumulada em 2026, Ng e nuvens.</div></header>
 <div class="toolbar">
 <input id="search" autocomplete="off" placeholder="🔎 Pesquisar município…">
@@ -52,14 +65,14 @@ footer{padding:7px 12px;font-size:11px;color:var(--muted);border-top:1px solid v
 <p class="small">Limites municipais: malha municipal distribuída para o navegador. Meteorologia: Open-Meteo. Pressão local: pressão atmosférica na superfície do município. Pressão ao nível do mar: pressão atmosférica reduzida ao nível médio do mar. Chuva 2026: soma diária desde 01/01/2026. Ng: dados municipais publicados em <b>ng-brasil-mapas</b>, conforme NBR 5419-2:2026 (Anexo F).</p></div>
 <div class="card notice"><b>🧭 Pressões atmosféricas</b><p class="small">A pressão local representa a pressão atmosférica na superfície/elevação do município. A pressão ao nível do mar é a pressão reduzida ao nível médio do mar. Ambas são apresentadas em hPa.</p></div>
 <div class="card notice"><b>⚡ Ng municipal — fonte indicada</b><p class="small">O valor de Ng é obtido diretamente do arquivo <b>ng_dados.json</b> publicado pelo projeto <b>Ng por Município</b>, usando o código IBGE do município. O campo principal utilizado é <b>ng_nbr5419_2026</b>.</p></div>
-<div class="card"><b>Publicação</b><p class="small">Este projeto é estático e pode ser publicado no GitHub Pages, Netlify ou Vercel. As consultas meteorológicas são feitas diretamente à API do Open-Meteo no navegador.</p></div>
+<div class="card"><b>Publicação</b><p class="small">V40 — Este projeto é estático e pode ser publicado no GitHub Pages, Netlify ou Vercel. As consultas meteorológicas são feitas diretamente à API do Open-Meteo no navegador.</p></div>
 </aside>
 </main>
 <footer>Mapa © OpenStreetMap contributors • Limites municipais • Meteorologia: Open-Meteo • Ng municipal: rafaelf09/ng-brasil-mapas — NBR 5419-2:2026</footer>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-const VERSION='V10';
+const VERSION='V40';
 const map=L.map('map',{preferCanvas:true}).setView([-6.2,-37.2],7);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18,attribution:'© OpenStreetMap contributors'}).addTo(map);
 
@@ -192,7 +205,9 @@ async function select(f,l){
  }catch(e){$('status').textContent='Não foi possível consultar a meteorologia agora.';l.bindPopup(`<b>📍 ${esc(name(p))} — ${esc(uf(p))}</b><br>Dados meteorológicos indisponíveis no momento.`).openPopup()}
 }
 const AIRPORTS=[
- {name:'Aeroporto Internacional de Fortaleza — Pinto Martins',city:'Fortaleza',uf:'CE',iata:'FOR',icao:'SBFZ',lat:-3.7758,lon:-38.5322},
+ // Principais
+
+ {name:'Aeroporto Internacional de Fortaleza — Pinto Martins / Base Aérea de Fortaleza',city:'Fortaleza',uf:'CE',iata:'FOR',icao:'SBFZ',lat:-3.7758,lon:-38.5322,type:'civil/militar'},
  {name:'Aeroporto de Jericoacoara',city:'Cruz/Jijoca de Jericoacoara',uf:'CE',iata:'JJD',icao:'SBJE',lat:-2.9067,lon:-40.3581},
  {name:'Aeroporto de Juazeiro do Norte — Orlando Bezerra de Menezes',city:'Juazeiro do Norte',uf:'CE',iata:'JDO',icao:'SBJU',lat:-7.21896,lon:-39.2701},
  {name:'Aeroporto de Mossoró — Dix-Sept Rosado',city:'Mossoró',uf:'RN',iata:'MVF',icao:'SBMS',lat:-5.2019,lon:-37.3643},
@@ -204,11 +219,49 @@ const AIRPORTS=[
  {name:'Aeroporto Internacional de Teresina — Senador Petrônio Portella',city:'Teresina',uf:'PI',iata:'THE',icao:'SBTE',lat:-5.0599,lon:-42.8235},
  {name:'Aeroporto Internacional de Parnaíba — Prefeito Dr. João Silva Filho',city:'Parnaíba',uf:'PI',iata:'PHB',icao:'SBPB',lat:-2.8937,lon:-41.7319},
  {name:'Aeroporto Internacional Zumbi dos Palmares',city:'Maceió',uf:'AL',iata:'MCZ',icao:'SBMO',lat:-9.5108,lon:-35.7917},
- {name:'Aeroporto Internacional de Aracaju — Santa Maria',city:'Aracaju',uf:'SE',iata:'AJU',icao:'SBAR',lat:-10.9840,lon:-37.0703},
+ {name:'Aeroporto Internacional de Aracaju — Santa Maria',city:'Aracaju',uf:'SE',iata:'AJU',icao:'SBAR',lat:-10.9840,lon:-37.0703,type:'civil'},
+ // Menor porte / regionais
+ {name:'Aeroporto Regional de Canoa Quebrada Dragão do Mar',city:'Aracati',uf:'CE',iata:'ARX',icao:'SBAC',lat:-4.5686,lon:-37.8047,type:'regional'},
+ {name:'Aeroporto de Quixadá',city:'Quixadá',uf:'CE',iata:'—',icao:'SNQX',lat:-4.9789,lon:-38.9878,type:'menor porte'},
+ {name:'Aeroporto Dr. Luciano de Arruda Coelho',city:'Sobral',uf:'CE',iata:'—',icao:'SN6L',lat:-3.6147,lon:-40.2322,type:'menor porte'},
+ {name:'Campo Augusto Severo — Base Aérea de Natal',city:'Natal',uf:'RN',iata:'—',icao:'SBNT',lat:-5.9083,lon:-35.2492,type:'militar'},
+ {name:'Aeroporto de Pau dos Ferros',city:'Pau dos Ferros',uf:'RN',iata:'—',icao:'SSKJ',lat:-6.1544,lon:-38.1969,type:'menor porte'},
+ {name:'Aeroporto Brigadeiro Firmino Ayres',city:'Patos',uf:'PB',iata:'—',icao:'SNTS',lat:-7.0378,lon:-37.2575,type:'menor porte'},
+ {name:'Aeroporto de Fernando de Noronha',city:'Fernando de Noronha',uf:'PE',iata:'FEN',icao:'SBFN',lat:-3.8549,lon:-32.4233,type:'regional'},
+ {name:'Aeroporto Santa Magalhães',city:'Serra Talhada',uf:'PE',iata:'—',icao:'SNHS',lat:-8.0614,lon:-38.3286,type:'menor porte'},
+ {name:'Aeroporto de Garanhuns',city:'Garanhuns',uf:'PE',iata:'—',icao:'SNGN',lat:-8.8344,lon:-36.4714,type:'menor porte'},
+ {name:'Aeroporto Oscar Laranjeiras',city:'Caruaru',uf:'PE',iata:'CAU',icao:'SNRU',lat:-8.2820,lon:-36.0132,type:'menor porte'},
 ];
 function esc(x){return String(x??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
 function flightLine(f,kind){const t=f.time?new Date(f.time):null;const hh=t&&!isNaN(t)?t.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit',hour12:false}):'—';const status=f.actual?'realizado':'previsto';const route=kind==='arrival'?f.origin:f.destination;return `<div class="flight"><b>${esc(f.airline||'—')}</b> ${esc(f.flight||'—')} · <b>${hh}</b> <span class="small">${esc(route||'—')} · ${status}</span></div>`}
 function flightSection(title,list,kind){return `<div class="flightbox"><b>${title}</b>${(list||[]).length?list.slice(0,20).map(f=>flightLine(f,kind)).join(''):'<span class="small">Nenhum voo encontrado.</span>'}</div>`}
+function airportIcon(a){
+ const color=a.type?.includes('militar')?'#ef4444':a.type==='menor porte'?'#f59e0b':a.type==='regional'?'#22c55e':'#38bdf8';
+ const emoji=a.type?.includes('militar')?'✈': '✈';
+ return L.divIcon({className:'airport-icon',html:`<div style="width:26px;height:26px;border-radius:50%;background:${color};border:2px solid #fff;box-shadow:0 2px 8px #0009;color:#06111d;font-weight:900;text-align:center;line-height:22px;font-size:15px">${emoji}</div>`,iconSize:[26,26],iconAnchor:[13,13]});
+}
+function metarUrl(icao){return `https://metar-taf.com/${encodeURIComponent(String(icao).toUpperCase())}`}
+function metarBox(a,j){
+ const ceiling=j.ceilingFt!=null?`${Math.round(j.ceilingFt)} ft`:'—';
+ const obs=j.metar?.obsTime?new Date(j.metar.obsTime).toLocaleString('pt-BR'):'—';
+ const aw=j.metar?.wind;
+ const awind=aw?.speedKt!=null?`${(Number(aw.speedKt)*1.852).toFixed(1)} km/h`: '—';
+ const adir=aw?.directionDeg!=null?`${Math.round(Number(aw.directionDeg))}°`: '—';
+ const raw=j.metar?.rawOb||'METAR indisponível';
+ return `<div class="metar-green">
+   <div class="metar-head">🟢 METAR — ${esc(a.icao)}</div>
+   <div class="metar-airport"><b>✈️ ${esc(a.name)}</b><br><span>${esc(a.city)} — ${esc(a.uf)} • ${esc(a.type||'aeroporto')}</span></div>
+   <div class="metar-grid">
+    <div><span>Observação</span><b>${esc(obs)}</b></div>
+    <div><span>Teto</span><b>${esc(ceiling)}</b></div>
+    <div><span>Vento</span><b>${esc(awind)}</b></div>
+    <div><span>Direção</span><b>${esc(adir)}</b></div>
+   </div>
+   <div class="metar-raw">${esc(raw)}</div>
+   <a class="metar-link" href="${metarUrl(a.icao)}" target="_blank" rel="noopener noreferrer">ABRIR METAR/TAF DE ${esc(a.icao)} ↗</a>
+   <div class="metar-note">Fonte meteorológica: Aviation Weather Center. A página acima abre <b>metar-taf.com/${esc(a.icao)}</b>.</div>
+ </div>`;
+}
 async function loadTransport(){
  airports=AIRPORTS; ports=[
  {name:'Porto do Pecém',uf:'CE',lat:-3.5315,lon:-38.7980},
@@ -223,21 +276,26 @@ async function loadTransport(){
  {name:'Porto de Luís Correia',uf:'PI',lat:-2.8833,lon:-41.6667}
  ];
  airportLayer=L.layerGroup().addTo(map); portLayer=L.layerGroup().addTo(map);
- airports.forEach(a=>{const m=L.marker([a.lat,a.lon],{title:a.name}).bindPopup(`<b>✈️ ${a.name}</b><br>${a.city} — ${a.iata}/${a.icao}<br><span id="ap-${a.icao}">Consultando voos, METAR e TAF…</span>`);m.on('click',()=>loadAirport(a,m));m.addTo(airportLayer)});
+ airports.forEach(a=>{
+   const marker=L.marker([a.lat,a.lon],{title:`${a.name} — ${a.icao}`,icon:airportIcon(a)});
+   marker.on('click',()=>loadAirport(a,marker));
+   marker.bindTooltip(`${a.icao} — ${a.city}`,{direction:'top',offset:[0,-10]});
+   marker.addTo(airportLayer);
+ });
  ports.forEach(x=>L.marker([x.lat,x.lon],{title:x.name}).bindPopup(`<b>🛳️ ${x.name}</b><br>${x.uf}`).addTo(portLayer));
- $('transport').innerHTML=`${airports.length} aeroportos e ${ports.length} portos/terminais representados. Clique em um aeroporto para consultar <b>METAR e TAF</b> e os voos programados nas <b>10 horas anteriores + 10 horas seguintes</b>.`;
+ $('transport').innerHTML=`${airports.length} aeroportos/aérodromos e ${ports.length} portos/terminais representados. <b>Vermelho = militar/civil-militar</b>, laranja = menor porte, azul = principal e ciano = regional. Clique no aeroporto para abrir a caixa METAR verde e o link direto para <b>metar-taf.com/ICAO</b>.`;
 }
 async function loadAirport(a,m){
+ const popupLoading=`<div class="metar-green"><div class="metar-head">🟢 METAR — ${esc(a.icao)}</div><b>✈️ ${esc(a.name)}</b><br><span>Consultando METAR/TAF…</span></div>`;
+ m.bindPopup(popupLoading,{maxWidth:390}).openPopup();
  try{
-  const r=await fetch(`/api/airport?icao=${encodeURIComponent(a.icao)}&lat=${a.lat}&lon=${a.lon}`); const j=await r.json();
-  const ceiling=j.ceilingFt!=null?`${Math.round(j.ceilingFt)} ft`:'sem teto BKN/OVC/VV informado';
-  const obs=j.metar?.obsTime?new Date(j.metar.obsTime).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}):'—';
-  const taf=j.taf?.rawTAF||'TAF indisponível';
-  const aw=j.metar?.wind; const awind=aw?.speedKt!=null?`${(Number(aw.speedKt)*1.852).toFixed(1)} km/h`:''; const adir=aw?.directionDeg!=null?`${Math.round(Number(aw.directionDeg))}°`:'';
-  const el=document.getElementById(`ap-${a.icao}`);
-  if(el)el.innerHTML=`<div class="aviation"><b>☁️ Teto:</b> ${ceiling}<br><b>METAR:</b> ${obs} · ${esc(j.metar?.rawOb||'indisponível')}<br><b>🌬 Vento METAR:</b> ${awind||'—'} ${adir}<br><b>TAF:</b> ${esc(taf)}<hr>${flightSection('🛬 Últimas 10 h — chegadas',j.arrivalsPast,'arrival')}${flightSection('🛫 Últimas 10 h — partidas',j.departuresPast,'departure')}${flightSection('🛬 Próximas 10 h — chegadas',j.arrivalsNext,'arrival')}${flightSection('🛫 Próximas 10 h — partidas',j.departuresNext,'departure')}</div>`;
-  m.openPopup();
- }catch(e){const el=document.getElementById(`ap-${a.icao}`);if(el)el.textContent='Não foi possível consultar voos/METAR/TAF agora.'}
+  const r=await fetch(`/api/airport?icao=${encodeURIComponent(a.icao)}&lat=${a.lat}&lon=${a.lon}`);
+  const j=await r.json();
+  m.bindPopup(metarBox(a,j),{maxWidth:390,minWidth:340}).openPopup();
+ }catch(e){
+  const fallback=`<div class="metar-green"><div class="metar-head">🟢 METAR — ${esc(a.icao)}</div><b>✈️ ${esc(a.name)}</b><br><span>Consulta automática indisponível.</span><br><br><a class="metar-link" href="${metarUrl(a.icao)}" target="_blank" rel="noopener noreferrer">ABRIR METAR/TAF DE ${esc(a.icao)} ↗</a></div>`;
+  m.bindPopup(fallback,{maxWidth:390}).openPopup();
+ }
 }
 function filterUF(v){
  if(!layer)return;
