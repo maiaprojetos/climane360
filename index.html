@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="description" content="Painel meteorológico municipal V3-P do Ceará, Rio Grande do Norte, Paraíba e Pernambuco.">
-<title>Painel Meteorológico NE — V40 • CE • RN • PB • PE • PI • AL • SE</title>
+<title>Painel Meteorológico NE — V41 Solar • CE • RN • PB • PE • PI • AL • SE</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
 :root{--bg:#06111d;--panel:#0b1a2a;--panel2:#10263b;--line:#203b55;--text:#edf6ff;--muted:#91a8bd;--accent:#38bdf8}
@@ -14,7 +14,7 @@ header{padding:15px 18px;border-bottom:1px solid var(--line);background:#071522}
 input,select,button{border:1px solid #2a4863;background:#081727;color:var(--text);border-radius:9px;padding:9px 10px}input{min-width:260px;flex:1}button{cursor:pointer}button.active{border-color:var(--accent);background:#10344b}
 main{height:calc(100% - 129px);display:grid;grid-template-columns:1fr 360px}#map{min-height:500px}.side{overflow:auto;padding:13px;background:var(--panel);border-left:1px solid var(--line)}
 .card{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:13px;margin-bottom:10px}.title{font-size:19px;font-weight:800}.small{font-size:12px;color:var(--muted)}
-.metrics{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}.metric{padding:10px;border-radius:9px;border:1px solid var(--line);background:#0a1b2d}.metric span{display:block;font-size:11px;color:var(--muted)}.metric b{display:block;font-size:17px;margin-top:3px}
+.metrics{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}.metric{padding:10px;border-radius:9px;border:1px solid var(--line);background:#0a1b2d}.metric span{display:block;font-size:11px;color:var(--muted)}.metric b{display:block;font-size:17px;margin-top:3px}.solar-card{border-color:#166534;background:#08251a}.solar-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.solar-result{font-size:20px;font-weight:900;color:#86efac}.solar-input{width:100%;min-width:0;margin-top:6px}.solar-note{font-size:11px;color:#9de8b6;line-height:1.35}
 .notice{border-left:3px solid #f59e0b;padding-left:10px}.loading{opacity:.7}.legend{background:rgba(6,17,29,.92);padding:9px;border-radius:8px;line-height:21px}.flightbox{margin-top:7px;padding:7px;border:1px solid var(--line);border-radius:8px;background:#081727}.flight{padding:3px 0;border-bottom:1px solid #183149}.flight:last-child{border-bottom:0}.aviation hr{border:0;border-top:1px solid var(--line);margin:8px 0}
 #searchResults{position:absolute;z-index:1000;top:59px;left:10px;right:10px;max-width:520px;background:var(--panel);border:1px solid var(--line);border-radius:10px;display:none;overflow:hidden}.result{padding:9px;border-bottom:1px solid var(--line);cursor:pointer}.result:hover{background:var(--panel2)}
 .airport-icon{background:transparent!important;border:0!important}
@@ -27,22 +27,26 @@ main{height:calc(100% - 129px);display:grid;grid-template-columns:1fr 360px}#map
 .metar-raw{background:#021f13;border:1px solid #17633e;border-radius:7px;padding:8px;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:12px;line-height:1.35;word-break:break-word;margin:8px 0}
 .metar-link{display:block;text-align:center;background:#22c55e;color:#032414!important;text-decoration:none;font-weight:900;border-radius:8px;padding:9px;margin-top:8px}
 .metar-note{font-size:10px;color:#9de8b6;margin-top:7px;line-height:1.3}
-.leaflet-popup-content-wrapper,.leaflet-popup-tip{background:#063b24}
-.leaflet-popup-content{margin:8px}
+.leaflet-popup-content-wrapper,.leaflet-popup-tip{background:#063b24;color:#fff}
+.leaflet-popup-content{margin:8px;color:#fff}
+.leaflet-popup-content b,.leaflet-popup-content span,.leaflet-popup-content div,.leaflet-popup-content a{color:#fff}
+.metar-green .metar-head{color:#fff}
+.metar-green .metar-airport span,.metar-green .metar-grid span,.metar-green .metar-note{color:#fff}
+.metar-green .metar-link{color:#fff!important}
 
 footer{padding:7px 12px;font-size:11px;color:var(--muted);border-top:1px solid var(--line)}
 @media(max-width:850px){main{height:auto;display:flex;flex-direction:column}.side{border-left:0;border-top:1px solid var(--line)}#map{height:58vh}.toolbar{position:relative}}
 </style>
 </head>
 <body>
-<header><div class="brand">🌎 Painel Meteorológico Municipal V40 — CE • RN • PB • PE • PI • AL • SE</div>
-<div class="muted">Temperatura, umidade, pressão, vento em km/h e direção, UV, chuva acumulada em 2026, Ng e nuvens.</div></header>
+<header><div class="brand">🌎 Painel Meteorológico Municipal V41 — CE • RN • PB • PE • PI • AL • SE</div>
+<div class="muted">Temperatura, umidade, pressão, vento em km/h e direção, UV, chuva acumulada em 2026, Ng, nuvens e energia solar.</div></header>
 <div class="toolbar">
-<input id="search" autocomplete="off" placeholder="🔎 Pesquisar município…">
+<input id="search" autocomplete="off" placeholder="🔎 Pesquisar município…"><input id="solarPower" class="solar-input" style="max-width:180px;flex:0 1 180px" type="number" min="0" step="0.1" value="5" placeholder="Potência FV (kWp)" title="Potência do conjunto de placas solares em kWp">
 <select id="metric">
 <option value="temp">🌡 Temperatura agora</option><option value="humidity">💧 Umidade agora</option>
 <option value="pressureLocal">🧭 Pressão local agora</option><option value="pressure">🌊 Pressão ao nível do mar</option><option value="rain">🌧 Chuva acumulada 2026</option>
-<option value="uv">☀️ UV máximo do dia</option><option value="ng">⚡ Ng — densidade de raios</option><option value="clouds">☁️ Nuvens agora</option><option value="wind">🌬 Vento agora</option>
+<option value="uv">☀️ UV máximo do dia</option><option value="ng">⚡ Ng — densidade de raios</option><option value="clouds">☁️ Nuvens agora</option><option value="solar">☀️ Irradiação solar hoje</option><option value="wind">🌬 Vento agora</option>
 </select>
 <button data-uf="CE" class="active">CE</button><button data-uf="RN">RN</button><button data-uf="PB">PB</button><button data-uf="PE">PE</button><button data-uf="PI">PI</button><button data-uf="AL">AL</button><button data-uf="SE">SE</button>
 </div>
@@ -58,21 +62,30 @@ footer{padding:7px 12px;font-size:11px;color:var(--muted);border-top:1px solid v
 <div class="metric"><span>🌊 Pressão ao nível do mar</span><b id="pressure">—</b></div>
 <div class="metric"><span>🌧 Chuva 2026</span><b id="rain">—</b></div>
 <div class="metric"><span>☀️ UV máximo</span><b id="uv">—</b></div>
-<div class="metric"><span>⚡ Ng municipal</span><b id="ng">—</b></div><div class="metric"><span>☁️ Nuvens</span><b id="clouds">—</b></div><div class="metric"><span>🌬 Vento</span><b id="wind">—</b></div><div class="metric"><span>🧭 Direção do vento</span><b id="windDir">—</b></div>
+<div class="metric"><span>⚡ Ng municipal</span><b id="ng">—</b></div><div class="metric"><span>☁️ Nuvens</span><b id="clouds">—</b></div><div class="metric"><span>☀️ Irradiação hoje</span><b id="solar">—</b></div><div class="metric"><span>🔆 Radiação atual</span><b id="solarNow">—</b></div><div class="metric"><span>🌬 Vento</span><b id="wind">—</b></div><div class="metric"><span>🧭 Direção do vento</span><b id="windDir">—</b></div>
 </div></div>
-<div class="card"><b>✈️ Aeroportos e 🛳️ portos</b><div id="transport" class="small">Carregando infraestrutura…</div></div><div class="card"><b>Status dos dados</b><p id="status" class="small">Carregando municípios…</p></div>
+<div class="card solar-card">
+<b>☀️ Estimativa de geração solar</b>
+<div class="solar-grid" style="margin-top:9px">
+ <div><span class="small">Potência do conjunto</span><input id="solarPowerSide" class="solar-input" type="number" min="0" step="0.1" value="5" placeholder="kWp"></div>
+ <div><span class="small">Cobertura de nuvens</span><b id="solarCloud">—</b></div>
+</div>
+<div style="margin-top:10px"><span class="small">Produção estimada média</span><div id="solarProduction" class="solar-result">—</div></div>
+<div class="small" style="margin-top:5px">≈ <span id="solarMonth">—</span> kWh/mês</div>
+<div class="solar-note" style="margin-top:8px">Estimativa simplificada: usa a irradiação solar diária consultada, potência informada e um fator de desempenho de 80%, com ajuste adicional pela cobertura de nuvens. Não substitui um dimensionamento fotovoltaico profissional.</div>
+</div><div class="card"><b>✈️ Aeroportos e 🛳️ portos</b><div id="transport" class="small">Carregando infraestrutura…</div></div><div class="card"><b>Status dos dados</b><p id="status" class="small">Carregando municípios…</p></div>
 <div class="card"><b>Fontes e metodologia</b>
-<p class="small">Limites municipais: malha municipal distribuída para o navegador. Meteorologia: Open-Meteo. Pressão local: pressão atmosférica na superfície do município. Pressão ao nível do mar: pressão atmosférica reduzida ao nível médio do mar. Chuva 2026: soma diária desde 01/01/2026. Ng: dados municipais publicados em <b>ng-brasil-mapas</b>, conforme NBR 5419-2:2026 (Anexo F).</p></div>
+<p class="small">Limites municipais: malha municipal distribuída para o navegador. Meteorologia e radiação solar: Open-Meteo. Pressão local: pressão atmosférica na superfície do município. Pressão ao nível do mar: pressão atmosférica reduzida ao nível médio do mar. Chuva 2026: soma diária desde 01/01/2026. Ng: dados municipais publicados em <b>ng-brasil-mapas</b>, conforme NBR 5419-2:2026 (Anexo F).</p></div>
 <div class="card notice"><b>🧭 Pressões atmosféricas</b><p class="small">A pressão local representa a pressão atmosférica na superfície/elevação do município. A pressão ao nível do mar é a pressão reduzida ao nível médio do mar. Ambas são apresentadas em hPa.</p></div>
 <div class="card notice"><b>⚡ Ng municipal — fonte indicada</b><p class="small">O valor de Ng é obtido diretamente do arquivo <b>ng_dados.json</b> publicado pelo projeto <b>Ng por Município</b>, usando o código IBGE do município. O campo principal utilizado é <b>ng_nbr5419_2026</b>.</p></div>
-<div class="card"><b>Publicação</b><p class="small">V40 — Este projeto é estático e pode ser publicado no GitHub Pages, Netlify ou Vercel. As consultas meteorológicas são feitas diretamente à API do Open-Meteo no navegador.</p></div>
+<div class="card"><b>Publicação</b><p class="small">V41 — Este projeto é estático e pode ser publicado no GitHub Pages, Netlify ou Vercel. As consultas meteorológicas são feitas diretamente à API do Open-Meteo no navegador.</p></div>
 </aside>
 </main>
 <footer>Mapa © OpenStreetMap contributors • Limites municipais • Meteorologia: Open-Meteo • Ng municipal: rafaelf09/ng-brasil-mapas — NBR 5419-2:2026</footer>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-const VERSION='V40';
+const VERSION='V41 Solar';
 const map=L.map('map',{preferCanvas:true}).setView([-6.2,-37.2],7);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18,attribution:'© OpenStreetMap contributors'}).addTo(map);
 
@@ -101,8 +114,8 @@ function tempColor(v){
  if(v==null)return '#475569';
  return v>=38?'#7f1d1d':v>=36?'#991b1b':v>=33?'#ea580c':v>=30?'#eab308':v>=27?'#22c55e':'#2563eb';
 }
-function color(v){ if(metric==='clouds'){if(v==null)return '#475569'; return v>=90?'#334155':v>=75?'#64748b':v>=50?'#94a3b8':v>=25?'#cbd5e1':'#f8fafc'} if(metric==='wind'){if(v==null)return '#475569'; return v>=40?'#7f1d1d':v>=30?'#dc2626':v>=20?'#f59e0b':v>=10?'#22c55e':'#2563eb'} return tempColor(v); }
-function metricValue(d){ if(metric==='clouds') return d?.clouds??null; if(metric==='wind') return d?.wind??null; return d?.temp??null }
+function color(v){ if(metric==='solar'){if(v==null)return '#475569'; return v>=6?'#166534':v>=4?'#22c55e':v>=2?'#eab308':'#64748b'} if(metric==='clouds'){if(v==null)return '#475569'; return v>=90?'#334155':v>=75?'#64748b':v>=50?'#94a3b8':v>=25?'#cbd5e1':'#f8fafc'} if(metric==='wind'){if(v==null)return '#475569'; return v>=40?'#7f1d1d':v>=30?'#dc2626':v>=20?'#f59e0b':v>=10?'#22c55e':'#2563eb'} return tempColor(v); }
+function metricValue(d){ if(metric==='solar') return d?.solar??null; if(metric==='clouds') return d?.clouds??null; if(metric==='wind') return d?.wind??null; return d?.temp??null }
 function windDirText(deg){ if(deg==null || !Number.isFinite(Number(deg)))return '—'; const d=((Number(deg)%360)+360)%360; const dirs=['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW']; return `${Math.round(d)}° ${dirs[Math.round(d/22.5)%16]}` }
 function windFmt(v){ return v==null?'—':`${Number(v).toFixed(1)} km/h` }
 function fmt(k,v){
@@ -114,6 +127,8 @@ function fmt(k,v){
  if(k==='uv')return v.toFixed(1);
  if(k==='ng')return v.toFixed(1)+' raios/km²/ano';
  if(k==='clouds')return Math.round(v)+' %';
+ if(k==='solar')return v.toFixed(2)+' kWh/m²/dia';
+ if(k==='solarNow')return Math.round(v)+' W/m²';
  if(k==='wind')return windFmt(v);
 }
 function style(f){return {weight:.55,color:'#18354d',fillColor:color(metricValue(cache[code(f.properties)])),fillOpacity:.72}}
@@ -156,11 +171,11 @@ function ngForMunicipio(c){
 
 async function weather(lat,lon){
  const tz='America/Sao_Paulo';
- const fc=`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,pressure_msl,surface_pressure,cloud_cover,wind_speed_10m,wind_direction_10m&daily=uv_index_max&timezone=${encodeURIComponent(tz)}&forecast_days=1`;
+ const fc=`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,pressure_msl,surface_pressure,cloud_cover,wind_speed_10m,wind_direction_10m,shortwave_radiation&daily=uv_index_max,shortwave_radiation_sum&timezone=${encodeURIComponent(tz)}&forecast_days=1`;
  const r=await fetch(fc); if(!r.ok)throw Error('forecast');
  const j=await r.json();
  const uv=j.daily?.uv_index_max?.[0]??null;
- return {temp:j.current?.temperature_2m,humidity:j.current?.relative_humidity_2m,pressure:j.current?.pressure_msl,pressureLocal:j.current?.surface_pressure,uv,clouds:j.current?.cloud_cover,wind:j.current?.wind_speed_10m,windDir:j.current?.wind_direction_10m};
+ return {temp:j.current?.temperature_2m,humidity:j.current?.relative_humidity_2m,pressure:j.current?.pressure_msl,pressureLocal:j.current?.surface_pressure,uv,clouds:j.current?.cloud_cover,wind:j.current?.wind_speed_10m,windDir:j.current?.wind_direction_10m,solarNow:j.current?.shortwave_radiation??null,solar:(Number(j.daily?.shortwave_radiation_sum?.[0])||0)/3.6};
 }
 async function rain2026(lat,lon){
  const start='2026-01-01';
@@ -170,9 +185,26 @@ async function rain2026(lat,lon){
  const j=await r.json();
  return (j.daily?.precipitation_sum||[]).reduce((s,x)=>s+(Number(x)||0),0);
 }
+function solarPowerValue(){const a=Number($('solarPower')?.value),b=Number($('solarPowerSide')?.value);return Number.isFinite(a)&&a>0?a:(Number.isFinite(b)&&b>0?b:0)}
+function cloudFactor(clouds){const c=Number(clouds);if(!Number.isFinite(c))return 1;return Math.max(.15,1-(c/100)*.75)}
+function solarEstimate(d){
+ const p=solarPowerValue(), irr=Number(d?.solar), cf=cloudFactor(d?.clouds);
+ if(!(p>0)||!(irr>=0))return null;
+ const day=p*irr*.80*cf;
+ return {day,month:day*30};
+}
+function updateSolarUI(d){
+ if(!d)return;
+ $('solar').textContent=fmt('solar',d.solar);
+ $('solarNow').textContent=fmt('solarNow',d.solarNow);
+ $('solarCloud').textContent=fmt('clouds',d.clouds);
+ const e=solarEstimate(d);
+ $('solarProduction').textContent=e?`${e.day.toFixed(1)} kWh/dia`:'—';
+ $('solarMonth').textContent=e?e.month.toFixed(0):'—';
+}
 async function getData(f){
  const c=code(f.properties), old=cache[c];
- if(old && old.ts>Date.now()-20*60*1000)return old;
+ if(old && old.ts>Date.now()-20*60*1000 && old.solar!=null && old.solarNow!=null)return old;
  const [lat,lon]=centerOf(f);
  $('status').textContent='Consultando meteorologia…';
  const [w,rain]=await Promise.all([
@@ -190,17 +222,17 @@ async function select(f,l){
  const p=f.properties,c=code(p),[lat,lon]=centerOf(f);
  $('place').textContent=`${name(p)} — ${uf(p)}`;
  $('meta').textContent=`Código IBGE: ${c||'—'} • centro aproximado: ${lat.toFixed(4)}, ${lon.toFixed(4)}`;
- ['temp','humidity','pressureLocal','pressure','rain','uv','ng','clouds','wind','windDir'].forEach(k=>$(k).textContent='…');
+ ['temp','humidity','pressureLocal','pressure','rain','uv','ng','clouds','solar','solarNow','wind','windDir'].forEach(k=>$(k).textContent='…');
  map.fitBounds(l.getBounds(),{maxZoom:10});
  try{
   let d=JSON.parse(localStorage.getItem('meteo-cache-'+c)||'null');
-  if(!d || d.ts<Date.now()-20*60*1000)d=await getData(f); else cache[c]=d;
-  ['temp','humidity','pressureLocal','pressure','rain','uv','ng','clouds'].forEach(k=>$(k).textContent=fmt(k,d[k]));
+  if(!d || d.ts<Date.now()-20*60*1000 || d.solar==null || d.solarNow==null)d=await getData(f); else cache[c]=d;
+  ['temp','humidity','pressureLocal','pressure','rain','uv','ng','clouds','solar','solarNow'].forEach(k=>$(k).textContent=fmt(k,d[k])); updateSolarUI(d);
   $('wind').textContent=windFmt(d.wind); $('windDir').textContent=windDirText(d.windDir);
   $('status').textContent=`Atualizado às ${new Date(d.ts).toLocaleTimeString('pt-BR')}. Ng: ${d.ng!=null?'fonte municipal rafaelf09/ng-brasil-mapas.':'indisponível.'}`;
   const selectedLabel=$('metric').selectedOptions[0]?.textContent||'Indicador selecionado';
   const selectedValue=metric==='wind'?`${windFmt(d.wind)} • ${windDirText(d.windDir)}`:fmt(metric,d[metric]);
-  const popup=`<div style="min-width:230px"><b>📍 ${esc(name(p))} — ${esc(uf(p))}</b><hr style="border:0;border-top:1px solid #aaa"><b>${esc(selectedLabel)}</b><br><span style="font-size:18px">${esc(selectedValue)}</span><br><br><b>🌡 ${fmt('temp',d.temp)} · 💧 ${fmt('humidity',d.humidity)}</b><br>🌬 ${windFmt(d.wind)} · ${windDirText(d.windDir)}<br>🧭 ${fmt('pressureLocal',d.pressureLocal)} · 🌊 ${fmt('pressure',d.pressure)}<br>☁️ ${fmt('clouds',d.clouds)} · 🌧 ${fmt('rain',d.rain)}<br>☀️ UV ${fmt('uv',d.uv)} · ⚡ Ng ${fmt('ng',d.ng)}<br><span style="font-size:11px;color:#667">Atualizado ${new Date(d.ts).toLocaleTimeString('pt-BR')}</span></div>`;
+  const popup=`<div style="min-width:230px"><b>📍 ${esc(name(p))} — ${esc(uf(p))}</b><hr style="border:0;border-top:1px solid #aaa"><b>${esc(selectedLabel)}</b><br><span style="font-size:18px">${esc(selectedValue)}</span><br><br><b>🌡 ${fmt('temp',d.temp)} · 💧 ${fmt('humidity',d.humidity)}</b><br>🌬 ${windFmt(d.wind)} · ${windDirText(d.windDir)}<br>🧭 ${fmt('pressureLocal',d.pressureLocal)} · 🌊 ${fmt('pressure',d.pressure)}<br>☁️ ${fmt('clouds',d.clouds)} · 🌧 ${fmt('rain',d.rain)}<br>☀️ UV ${fmt('uv',d.uv)} · ☀️ ${fmt('solar',d.solar)} · ⚡ Ng ${fmt('ng',d.ng)}<br><span style="font-size:11px;color:#667">Atualizado ${new Date(d.ts).toLocaleTimeString('pt-BR')}</span></div>`;
   l.bindPopup(popup,{maxWidth:320}).openPopup();
  }catch(e){$('status').textContent='Não foi possível consultar a meteorologia agora.';l.bindPopup(`<b>📍 ${esc(name(p))} — ${esc(uf(p))}</b><br>Dados meteorológicos indisponíveis no momento.`).openPopup()}
 }
@@ -301,7 +333,10 @@ function filterUF(v){
  if(!layer)return;
  layer.eachLayer(l=>{const ok=uf(l.feature.properties)===v;l.setStyle({...style(l.feature),fillOpacity:ok?.72:.04,opacity:ok?1:.18})});
 }
-$('metric').onchange=e=>{metric=e.target.value;render()};
+$('metric').onchange=e=>{metric=e.target.value;render();if(selected){const d=cache[code(selected.properties)];if(d)updateSolarUI(d)}};
+function syncSolarPower(v,source){const n=Number(v);if(!Number.isFinite(n)||n<0)return;const a=$('solarPower'),b=$('solarPowerSide');if(source!==a)a.value=n;if(source!==b)b.value=n;if(selected){const d=cache[code(selected.properties)];if(d)updateSolarUI(d)}}
+$('solarPower').oninput=e=>syncSolarPower(e.target.value,e.target);
+$('solarPowerSide').oninput=e=>syncSolarPower(e.target.value,e.target);
 document.querySelectorAll('[data-uf]').forEach(b=>b.onclick=()=>{document.querySelectorAll('[data-uf]').forEach(x=>x.classList.remove('active'));b.classList.add('active');filterUF(b.dataset.uf)});
 function activateUF(v){const b=document.querySelector(`[data-uf="${v}"]`);if(b){document.querySelectorAll('[data-uf]').forEach(x=>x.classList.remove('active'));b.classList.add('active');filterUF(v)}}
 
